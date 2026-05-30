@@ -14,6 +14,8 @@ import { SkeletonCard } from '../../components/ui/Skeleton';
 import pathService from '../../services/pathService';
 import taskService from '../../services/taskService';
 import cheatsheetService from '../../services/cheatsheetService';
+import usePageTitle from '../../hooks/usePageTitle';
+import { downloadFile } from '../../utils/downloadFile';
 
 const TYPE_COLOR = { task: 'gray', project: 'blue', submission: 'purple' };
 const API_BASE   = (process.env.REACT_APP_API_URL || 'http://localhost:5000/api').replace('/api', '');
@@ -35,10 +37,17 @@ function ResourceRow({ resource, onDelete }) {
         {isFile && resource.fileSize && <p className="text-xs text-outline dark:text-slate-500">{sizeLabel(resource.fileSize)}</p>}
         {!isFile && resource.url && <p className="text-xs text-outline dark:text-slate-500 truncate">{resource.url}</p>}
       </div>
-      <a href={href} target="_blank" rel="noopener noreferrer" download={isFile}
-        className="text-outline dark:text-slate-500 hover:text-primary p-0.5 transition-colors">
-        {isFile ? <Download size={14} /> : <ExternalLink size={14} />}
-      </a>
+      {isFile ? (
+        <button type="button" onClick={() => downloadFile(href, resource.title)}
+          className="text-outline dark:text-slate-500 hover:text-primary p-0.5 transition-colors">
+          <Download size={14} />
+        </button>
+      ) : (
+        <a href={href} target="_blank" rel="noopener noreferrer"
+          className="text-outline dark:text-slate-500 hover:text-primary p-0.5 transition-colors">
+          <ExternalLink size={14} />
+        </a>
+      )}
       <button onClick={() => onDelete(resource.id)} className="text-outline dark:text-slate-500 hover:text-error p-0.5 transition-colors">
         <Trash2 size={14} />
       </button>
@@ -206,7 +215,7 @@ function AdminCheatSheetPanel({ levelId }) {
 
   const handleDelete = async (id) => {
     try { await cheatsheetService.delete(id); setSheets(p => p.filter(s => s.id !== id)); }
-    catch { /* silent */ }
+    catch (err) { alert(err.response?.data?.message || 'Failed to delete cheat sheet.'); }
   };
 
   return (
@@ -233,10 +242,17 @@ function AdminCheatSheetPanel({ levelId }) {
                     <p className="text-sm font-medium text-on-surface dark:text-white truncate">{s.title}</p>
                     <p className="text-xs text-outline dark:text-slate-500">{s.type === 'file' ? 'File' : 'Link'}</p>
                   </div>
-                  <a href={s.filePath ? `${API_BASE}${s.filePath}` : s.url} target="_blank" rel="noopener noreferrer" download={s.type === 'file'}
-                    className="text-amber-500 hover:text-amber-600 p-0.5">
-                    {s.type === 'file' ? <Download size={14} /> : <ExternalLink size={14} />}
-                  </a>
+                  {s.type === 'file' ? (
+                    <button type="button" onClick={() => downloadFile(`${API_BASE}${s.filePath}`, s.title)}
+                      className="text-amber-500 hover:text-amber-600 p-0.5">
+                      <Download size={14} />
+                    </button>
+                  ) : (
+                    <a href={s.url} target="_blank" rel="noopener noreferrer"
+                      className="text-amber-500 hover:text-amber-600 p-0.5">
+                      <ExternalLink size={14} />
+                    </a>
+                  )}
                   <button onClick={() => handleDelete(s.id)} className="text-outline dark:text-slate-500 hover:text-error p-0.5"><Trash2 size={14} /></button>
                 </div>
               ))}
@@ -306,11 +322,13 @@ function TaskRow({ task, onTaskUpdate, onDelete }) {
     onTaskUpdate?.();
   };
 
+  const [confirmDelete, setConfirmDelete] = useState(false);
+
   const handleDelete = async () => {
-    if (!window.confirm(`Delete task "${task.title}"?`)) return;
+    if (!confirmDelete) { setConfirmDelete(true); return; }
     setDeleting(true);
     try { await taskService.deleteTask(task.id); onDelete(task.id); }
-    catch (err) { alert(err.response?.data?.message || 'Failed to delete.'); setDeleting(false); }
+    catch (err) { alert(err.response?.data?.message || 'Failed to delete.'); setDeleting(false); setConfirmDelete(false); }
   };
 
   return (
@@ -330,9 +348,19 @@ function TaskRow({ task, onTaskUpdate, onDelete }) {
           </button>
           {/* Edit + Delete buttons */}
           <button onClick={() => setShowEdit(true)} className="text-outline dark:text-slate-500 hover:text-primary p-1 transition-colors" title="Edit task"><Pencil size={14} /></button>
-          <button onClick={handleDelete} disabled={deleting} className={`text-outline dark:text-slate-500 hover:text-error p-1 transition-colors ${deleting ? 'opacity-50' : ''}`} title="Delete task">
-            {deleting ? <div className="w-3.5 h-3.5 border-2 border-error/30 border-t-error rounded-full animate-spin" /> : <Trash2 size={14} />}
-          </button>
+          {confirmDelete ? (
+            <div className="flex items-center gap-1">
+              <button onClick={handleDelete} disabled={deleting}
+                className="text-xs text-white bg-error hover:bg-error/90 px-1.5 py-0.5 rounded transition-colors disabled:opacity-50">
+                {deleting ? '...' : 'Yes'}
+              </button>
+              <button onClick={() => setConfirmDelete(false)} className="text-xs text-outline hover:text-on-surface px-1.5 py-0.5 rounded border border-outline-variant/30 dark:border-white/10 transition-colors">No</button>
+            </div>
+          ) : (
+            <button onClick={handleDelete} disabled={deleting} className={`text-outline dark:text-slate-500 hover:text-error p-1 transition-colors ${deleting ? 'opacity-50' : ''}`} title="Delete task">
+              {deleting ? <div className="w-3.5 h-3.5 border-2 border-error/30 border-t-error rounded-full animate-spin" /> : <Trash2 size={14} />}
+            </button>
+          )}
         </div>
 
         <AnimatePresence>
@@ -387,17 +415,16 @@ function LevelPanel({ level, pathUsers }) {
   const handleTaskAdded = () => loadTasks();
   const handleDeleteTask = (taskId) => setTasks(p => (p || []).filter(t => t.id !== taskId));
 
+  const [pendingLock, setPendingLock] = useState(null); // null | true | false
+
   const handleToggleLock = async (lock) => {
-    const msg = lock
-      ? `Lock level "${level.title}" for ALL users? (Removes completion progress)`
-      : `Unlock level "${level.title}" for ALL assigned users?`;
-    if (!window.confirm(msg)) return;
+    if (pendingLock === null) { setPendingLock(lock); return; }
     setLocking(true);
     try {
-      await pathService.toggleLevelLock(level.id, lock);
-      setLockState(lock ? 'locked' : 'unlocked');
+      await pathService.toggleLevelLock(level.id, pendingLock);
+      setLockState(pendingLock ? 'locked' : 'unlocked');
     } catch (err) { alert(err.response?.data?.message || 'Failed.'); }
-    finally { setLocking(false); }
+    finally { setLocking(false); setPendingLock(null); }
   };
 
   const stateLabel = lockState === 'locked' ? '🔒 Locked' : lockState === 'unlocked' ? '🔓 Unlocked' : null;
@@ -420,16 +447,34 @@ function LevelPanel({ level, pathUsers }) {
         </button>
         {/* Lock / Unlock buttons */}
         <div className="flex items-center gap-1 flex-shrink-0">
-          <button onClick={() => handleToggleLock(false)} disabled={locking}
-            title="Force unlock for all users"
-            className="flex items-center gap-1 px-2 py-1 rounded text-xs font-medium text-tertiary hover:bg-tertiary/10 transition-colors border border-tertiary/30 disabled:opacity-50">
-            <Unlock size={12} /> Unlock
-          </button>
-          <button onClick={() => handleToggleLock(true)} disabled={locking}
-            title="Force lock for all users"
-            className="flex items-center gap-1 px-2 py-1 rounded text-xs font-medium text-error hover:bg-error/10 transition-colors border border-error/30 disabled:opacity-50">
-            <Lock size={12} /> Lock
-          </button>
+          {pendingLock !== null ? (
+            <>
+              <span className="text-xs text-on-surface-variant dark:text-slate-400 font-medium">
+                {pendingLock ? 'Lock all?' : 'Unlock all?'}
+              </span>
+              <button onClick={() => handleToggleLock(pendingLock)} disabled={locking}
+                className="flex items-center gap-1 px-2 py-1 rounded text-xs font-medium text-white bg-primary hover:bg-primary-container transition-colors disabled:opacity-50">
+                {locking ? '...' : 'Yes'}
+              </button>
+              <button onClick={() => setPendingLock(null)}
+                className="px-2 py-1 rounded text-xs font-medium text-outline hover:text-on-surface border border-outline-variant/30 dark:border-white/10 transition-colors">
+                No
+              </button>
+            </>
+          ) : (
+            <>
+              <button onClick={() => handleToggleLock(false)} disabled={locking}
+                title="Force unlock for all users"
+                className="flex items-center gap-1 px-2 py-1 rounded text-xs font-medium text-tertiary hover:bg-tertiary/10 transition-colors border border-tertiary/30 disabled:opacity-50">
+                <Unlock size={12} /> Unlock
+              </button>
+              <button onClick={() => handleToggleLock(true)} disabled={locking}
+                title="Force lock for all users"
+                className="flex items-center gap-1 px-2 py-1 rounded text-xs font-medium text-error hover:bg-error/10 transition-colors border border-error/30 disabled:opacity-50">
+                <Lock size={12} /> Lock
+              </button>
+            </>
+          )}
         </div>
       </div>
 
@@ -559,6 +604,7 @@ function PathPanel({ path }) {
 
 // ─── Main Page ────────────────────────────────────────────────────────────────
 export default function AdminTasksPage() {
+  usePageTitle('Tasks & Resources');
   const [allPaths, setAllPaths] = useState([]);
   const [loading, setLoading]   = useState(true);
   const [error, setError]       = useState(null);

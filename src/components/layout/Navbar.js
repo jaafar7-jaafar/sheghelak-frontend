@@ -32,9 +32,7 @@ export default function Navbar() {
       <div className="max-w-6xl mx-auto px-6 h-16 flex items-center justify-between">
         {/* Logo */}
         <Link to="/" className="flex items-center gap-2 flex-shrink-0">
-          <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center">
-            <span className="text-white font-bold text-sm">S</span>
-          </div>
+          <img src="/logo.png" alt="Sheghelak" className="h-9 w-auto object-contain" />
           <span className="font-bold text-base text-on-surface dark:text-white tracking-tight">Sheghelak</span>
         </Link>
 

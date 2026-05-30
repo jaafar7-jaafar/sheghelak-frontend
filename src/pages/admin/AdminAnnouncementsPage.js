@@ -1,6 +1,7 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import { motion } from 'framer-motion';
 import { Plus, Trash2, Send, Pin } from 'lucide-react';
+import usePageTitle from '../../hooks/usePageTitle';
 import DashboardLayout from '../../layouts/DashboardLayout';
 import Card from '../../components/ui/Card';
 import Badge from '../../components/ui/Badge';
@@ -9,6 +10,7 @@ import { SkeletonCard } from '../../components/ui/Skeleton';
 import announcementService from '../../services/announcementService';
 
 export default function AdminAnnouncementsPage() {
+  usePageTitle('Announcements');
   const [announcements, setAnnouncements] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);

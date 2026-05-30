@@ -2,8 +2,10 @@ import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import Button from '../components/ui/Button';
+import usePageTitle from '../hooks/usePageTitle';
 
 export default function NotFound() {
+  usePageTitle('Page Not Found');
   const navigate = useNavigate();
   return (
     <div className="min-h-screen bg-background dark:bg-slate-900 flex items-center justify-center p-6">

@@ -3,11 +3,15 @@ import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { ThemeProvider } from './theme/ThemeContext';
 import { AuthProvider } from './modules/auth/AuthContext';
 import { RequireAuth, RequireAdmin, RedirectIfAuth } from './routes/guards';
+import { ToastProvider } from './components/ui/Toast';
+import ScrollToTop from './components/ScrollToTop';
+import BackToTop from './components/ui/BackToTop';
 
 const LandingPage           = lazy(() => import('./pages/public/LandingPage'));
 const PathsPage        = lazy(() => import('./pages/public/PathsPage'));
 const LoginPage             = lazy(() => import('./pages/auth/LoginPage'));
 const RegisterPage          = lazy(() => import('./pages/auth/RegisterPage'));
+const ResetPasswordPage     = lazy(() => import('./pages/auth/ResetPasswordPage'));
 const UserDashboard         = lazy(() => import('./pages/user/UserDashboard'));
 const PathPage              = lazy(() => import('./pages/user/PathPage'));
 const TasksPage             = lazy(() => import('./pages/user/TasksPage'));
@@ -45,13 +49,17 @@ export default function App() {
   return (
     <ThemeProvider>
       <AuthProvider>
+        <ToastProvider>
         <BrowserRouter>
+          <ScrollToTop />
+          <BackToTop />
           <Suspense fallback={<PageLoader />}>
             <Routes>
               <Route path="/" element={<LandingPage />} />
               <Route path="/paths" element={<PathsPage />} />
               <Route path="/login" element={<RedirectIfAuth><LoginPage /></RedirectIfAuth>} />
               <Route path="/register" element={<RedirectIfAuth><RegisterPage /></RedirectIfAuth>} />
+              <Route path="/reset-password" element={<RedirectIfAuth><ResetPasswordPage /></RedirectIfAuth>} />
               <Route path="/dashboard" element={<RequireAuth><UserDashboard /></RequireAuth>} />
               <Route path="/dashboard/path" element={<RequireAuth><PathPage /></RequireAuth>} />
               <Route path="/dashboard/tasks" element={<RequireAuth><TasksPage /></RequireAuth>} />
@@ -70,6 +78,7 @@ export default function App() {
             </Routes>
           </Suspense>
         </BrowserRouter>
+        </ToastProvider>
       </AuthProvider>
     </ThemeProvider>
   );

@@ -7,6 +7,7 @@ import ProgressBar from '../../components/ui/ProgressBar';
 import Badge from '../../components/ui/Badge';
 import { SkeletonCard } from '../../components/ui/Skeleton';
 import progressService from '../../services/progressService';
+import usePageTitle from '../../hooks/usePageTitle';
 
 function LevelCard({ level, defaultOpen = false }) {
   const [open, setOpen] = useState(defaultOpen);
@@ -94,6 +95,7 @@ function LevelCard({ level, defaultOpen = false }) {
 }
 
 export default function PathPage() {
+  usePageTitle('My Path');
   const [progress, setProgress] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);

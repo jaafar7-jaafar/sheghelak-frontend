@@ -15,6 +15,8 @@ import progressService from '../../services/progressService';
 import taskService from '../../services/taskService';
 import submissionService from '../../services/submissionService';
 import cheatsheetService from '../../services/cheatsheetService';
+import usePageTitle from '../../hooks/usePageTitle';
+import { downloadFile } from '../../utils/downloadFile';
 
 const TYPE_COLOR = { project: 'blue', task: 'gray', submission: 'purple' };
 const API_BASE = (process.env.REACT_APP_API_URL || 'http://localhost:5000/api').replace('/api', '');
@@ -41,12 +43,10 @@ function ResourceItem({ resource }) {
 
   if (isFile) {
     return (
-      <a
-        href={fileUrl}
-        target="_blank"
-        rel="noopener noreferrer"
-        download
-        className="flex items-center gap-3 p-3 rounded-lg border border-outline-variant/30 dark:border-white/5 bg-surface-container-low dark:bg-slate-900/50 hover:border-primary/30 hover:bg-primary/4 dark:hover:bg-primary/8 transition-all group"
+      <button
+        type="button"
+        onClick={() => downloadFile(fileUrl, resource.title)}
+        className="w-full flex items-center gap-3 p-3 rounded-lg border border-outline-variant/30 dark:border-white/5 bg-surface-container-low dark:bg-slate-900/50 hover:border-primary/30 hover:bg-primary/4 dark:hover:bg-primary/8 transition-all group text-left"
       >
         <div className="w-9 h-9 rounded-lg bg-primary/10 dark:bg-primary/20 flex items-center justify-center flex-shrink-0 group-hover:bg-primary/15">
           <FileText size={17} className="text-primary" />
@@ -59,7 +59,7 @@ function ResourceItem({ resource }) {
           </p>
         </div>
         <Download size={16} className="text-outline dark:text-slate-500 group-hover:text-primary flex-shrink-0 transition-colors" />
-      </a>
+      </button>
     );
   }
 
@@ -94,12 +94,30 @@ function CheatSheetItem({ sheet }) {
       : 'FILE')
     : null;
 
+  if (isFile) {
+    return (
+      <button
+        type="button"
+        onClick={() => downloadFile(fileUrl, sheet.title)}
+        className="w-full flex items-center gap-3 p-3 rounded-lg border border-amber-200/60 dark:border-amber-700/30 bg-amber-50/60 dark:bg-amber-900/10 hover:bg-amber-100/80 dark:hover:bg-amber-900/20 transition-all group text-left"
+      >
+        <div className="w-9 h-9 rounded-lg bg-amber-100 dark:bg-amber-900/30 flex items-center justify-center flex-shrink-0">
+          <File size={17} className="text-amber-600 dark:text-amber-400" />
+        </div>
+        <div className="flex-1 min-w-0">
+          <p className="text-sm font-medium text-on-surface dark:text-white truncate">{sheet.title}</p>
+          <p className="text-xs text-amber-600/70 dark:text-amber-400/70 mt-0.5">{ext || 'File'} · Cheat Sheet</p>
+        </div>
+        <Download size={16} className="text-amber-500 dark:text-amber-400 flex-shrink-0" />
+      </button>
+    );
+  }
+
   return (
     <a
       href={fileUrl}
       target="_blank"
       rel="noopener noreferrer"
-      download={isFile}
       className="flex items-center gap-3 p-3 rounded-lg border border-amber-200/60 dark:border-amber-700/30 bg-amber-50/60 dark:bg-amber-900/10 hover:bg-amber-100/80 dark:hover:bg-amber-900/20 transition-all group"
     >
       <div className="w-9 h-9 rounded-lg bg-amber-100 dark:bg-amber-900/30 flex items-center justify-center flex-shrink-0">
@@ -107,14 +125,9 @@ function CheatSheetItem({ sheet }) {
       </div>
       <div className="flex-1 min-w-0">
         <p className="text-sm font-medium text-on-surface dark:text-white truncate">{sheet.title}</p>
-        <p className="text-xs text-amber-600/70 dark:text-amber-400/70 mt-0.5">
-          {isFile ? (ext || 'File') : 'External Link'} · Cheat Sheet
-        </p>
+        <p className="text-xs text-amber-600/70 dark:text-amber-400/70 mt-0.5">External Link · Cheat Sheet</p>
       </div>
-      {isFile
-        ? <Download size={16} className="text-amber-500 dark:text-amber-400 flex-shrink-0" />
-        : <ExternalLink size={16} className="text-amber-500 dark:text-amber-400 flex-shrink-0" />
-      }
+      <ExternalLink size={16} className="text-amber-500 dark:text-amber-400 flex-shrink-0" />
     </a>
   );
 }
@@ -344,6 +357,7 @@ function TaskModal({ task, onClose, onTaskComplete }) {
 
 // ─── Main Page ────────────────────────────────────────────────────────────────
 export default function TasksPage() {
+  usePageTitle('Tasks');
   const [progress, setProgress] = useState(null);
   const [tasks, setTasks] = useState([]);
   const [loading, setLoading] = useState(true);

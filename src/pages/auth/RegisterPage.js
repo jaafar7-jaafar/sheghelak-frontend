@@ -6,6 +6,7 @@ import { useAuth } from '../../modules/auth/AuthContext';
 import { useTheme } from '../../theme/ThemeContext';
 import Button from '../../components/ui/Button';
 import Input from '../../components/ui/Input';
+import usePageTitle from '../../hooks/usePageTitle';
 
 function validate(form) {
   if (!form.name.trim()) return 'Name is required.';
@@ -16,6 +17,7 @@ function validate(form) {
 }
 
 export default function RegisterPage() {
+  usePageTitle('Create Account');
   const { register } = useAuth();
   const { isDark, toggle } = useTheme();
   const navigate = useNavigate();
@@ -39,7 +41,7 @@ export default function RegisterPage() {
       await register(form.name, form.email, form.password);
       navigate('/dashboard');
     } catch (err) {
-      setError(err.message);
+      setError(err.response?.data?.message || err.message || 'Registration failed. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -50,10 +52,8 @@ export default function RegisterPage() {
       {/* Left branding */}
       <div className="hidden lg:flex flex-col justify-between w-[480px] flex-shrink-0 bg-slate-900 dark:bg-slate-950 p-10">
         <Link to="/" className="flex items-center gap-2">
-          <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center">
-            <span className="text-white font-bold text-sm">S</span>
-          </div>
-          <span className="font-bold text-white">Sheghelak</span>
+          <img src="/logo.png" alt="Sheghelak" className="h-9 w-auto object-contain" />
+          <span className="font-bold text-white text-base">Sheghelak</span>
         </Link>
 
         <motion.div initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6 }}>
@@ -86,9 +86,7 @@ export default function RegisterPage() {
       <div className="flex-1 flex flex-col">
         <div className="flex items-center justify-between px-6 py-4">
           <Link to="/" className="lg:hidden flex items-center gap-2">
-            <div className="w-7 h-7 rounded-lg bg-primary flex items-center justify-center">
-              <span className="text-white font-bold text-xs">S</span>
-            </div>
+            <img src="/logo.png" alt="Sheghelak" className="h-8 w-auto object-contain" />
             <span className="font-bold text-sm text-on-surface dark:text-white">Sheghelak</span>
           </Link>
           <div className="lg:ml-auto flex items-center gap-3">

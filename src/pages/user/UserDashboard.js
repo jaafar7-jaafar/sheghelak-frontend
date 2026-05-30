@@ -11,6 +11,7 @@ import Button from '../../components/ui/Button';
 import { SkeletonCard, SkeletonLine } from '../../components/ui/Skeleton';
 import progressService from '../../services/progressService';
 import announcementService from '../../services/announcementService';
+import usePageTitle from '../../hooks/usePageTitle';
 
 function StatCard({ icon: Icon, label, value, sub, color = 'blue', loading }) {
   const colors = {
@@ -43,6 +44,7 @@ function fade(delay = 0) {
 }
 
 export default function UserDashboard() {
+  usePageTitle('Dashboard');
   const { user } = useAuth();
   const navigate = useNavigate();
   const [progress, setProgress] = useState(null);
@@ -69,6 +71,9 @@ export default function UserDashboard() {
     load();
   }, []);
 
+  const hour = new Date().getHours();
+  const greeting = hour < 12 ? 'Good morning' : hour < 18 ? 'Good afternoon' : 'Good evening';
+
   const currentLevel = progress?.levels?.find(l => l.isCurrent);
   const completedTasks = currentLevel?.completedTasks ?? 0;
   const totalTasks = currentLevel?.totalTasks ?? 0;
@@ -79,7 +84,7 @@ export default function UserDashboard() {
       <div className="p-6 max-w-5xl mx-auto">
         <motion.div {...fade(0)} className="mb-8">
           <h1 className="text-2xl font-bold text-on-surface dark:text-white mb-1">
-            Good morning, {user?.name?.split(' ')[0]} 👋
+            {greeting}, {user?.name?.split(' ')[0]} 👋
           </h1>
           <p className="text-sm text-on-surface-variant dark:text-slate-400">
             {new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}

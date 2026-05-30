@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 import { Send, Save, Link } from 'lucide-react';
+import usePageTitle from '../../hooks/usePageTitle';
 import DashboardLayout from '../../layouts/DashboardLayout';
 import Card from '../../components/ui/Card';
 import Button from '../../components/ui/Button';
@@ -8,6 +9,7 @@ import { SkeletonLine } from '../../components/ui/Skeleton';
 import telegramService from '../../services/telegramService';
 
 export default function AdminSettingsPage() {
+  usePageTitle('Platform Settings');
   const [telegramUrl, setTelegramUrl] = useState('');
   const [telegramEnabled, setTelegramEnabled] = useState(true);
   const [loading, setLoading] = useState(true);
@@ -21,7 +23,7 @@ export default function AdminSettingsPage() {
         setTelegramUrl(res.data?.communityUrl || '');
         setTelegramEnabled(res.data?.isEnabled ?? true);
       })
-      .catch(() => {})
+      .catch(err => setError(err.response?.data?.message || 'Failed to load settings. Please refresh the page.'))
       .finally(() => setLoading(false));
   }, []);
 

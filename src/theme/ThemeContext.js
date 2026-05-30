@@ -15,6 +15,18 @@ export function ThemeProvider({ children }) {
     localStorage.setItem('sheghelak-theme', isDark ? 'dark' : 'light');
   }, [isDark]);
 
+  // Ctrl+Shift+D keyboard shortcut to toggle theme
+  useEffect(() => {
+    const handler = (e) => {
+      if (e.ctrlKey && e.shiftKey && e.key === 'D') {
+        e.preventDefault();
+        setIsDark(p => !p);
+      }
+    };
+    window.addEventListener('keydown', handler);
+    return () => window.removeEventListener('keydown', handler);
+  }, []);
+
   const toggle = () => setIsDark(p => !p);
 
   return (

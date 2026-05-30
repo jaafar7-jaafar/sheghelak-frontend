@@ -5,14 +5,14 @@ import {
   BookOpen, Clock, Users, ArrowRight, Layers,
   ChevronRight, Search, Zap, DollarSign
 } from 'lucide-react';
-import axios from 'axios';
+import api from '../../services/api';
 import Navbar from '../../components/layout/Navbar';
+import { useAuth } from '../../modules/auth/AuthContext';
+import usePageTitle from '../../hooks/usePageTitle';
 import Card from '../../components/ui/Card';
 import Badge from '../../components/ui/Badge';
 import Button from '../../components/ui/Button';
 import { SkeletonCard } from '../../components/ui/Skeleton';
-
-const API_BASE = process.env.REACT_APP_API_URL || 'http://localhost:5000/api';
 
 // ─── Difficulty badge colors ──────────────────────────────────────────────────
 const DIFF_COLOR  = { Beginner: 'green', Intermediate: 'blue', Advanced: 'red' };
@@ -37,10 +37,11 @@ function fade(delay = 0) {
 }
 
 // ─── Path Card ────────────────────────────────────────────────────────────────
-function PathCard({ path, index }) {
+function PathCard({ path, index, userPathId }) {
   const navigate = useNavigate();
   const levels   = path.levels || [];
   const taskCount = levels.reduce((sum, l) => sum + (l._count?.tasks || 0), 0);
+  const isEnrolled = !!userPathId && userPathId === path.id;
 
   return (
     <motion.div
@@ -52,14 +53,19 @@ function PathCard({ path, index }) {
         className="p-6 h-full flex flex-col hover:shadow-card-hover hover:-translate-y-px transition-all duration-200 cursor-pointer group"
         onClick={() => navigate('/register')}
       >
-        {/* Top: category + difficulty + price */}
+        {/* Top: category + difficulty + price + enrolled */}
         <div className="flex items-center justify-between mb-4">
           <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold ${CAT_COLORS[path.category] || CAT_COLORS.Other}`}>
             <Zap size={11} />
             {path.category}
           </span>
           <div className="flex items-center gap-2">
-            {path.price && (
+            {isEnrolled && (
+              <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold bg-tertiary/10 text-tertiary border border-tertiary/20">
+                ✓ Enrolled
+              </span>
+            )}
+            {path.price && !isEnrolled && (
               <span className="inline-flex items-center gap-0.5 px-2.5 py-1 rounded-full text-xs font-bold bg-primary text-white">
                 <DollarSign size={11} />{parseFloat(path.price).toFixed(0)}
               </span>
@@ -117,7 +123,9 @@ function PathCard({ path, index }) {
 
 // ─── Main Page ────────────────────────────────────────────────────────────────
 export default function PathsPage() {
-  const navigate       = useNavigate();
+  usePageTitle('Learning Paths');
+  const { user } = useAuth();
+  const navigate = useNavigate();
   const [paths, setPaths]     = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError]     = useState(null);
@@ -126,7 +134,7 @@ export default function PathsPage() {
   const [catFilter, setCatFilter]   = useState('All');
 
   useEffect(() => {
-    axios.get(`${API_BASE}/paths`, { params: { limit: 50 } })
+    api.get('/paths', { params: { limit: 50 } })
       .then(res => setPaths(res.data?.data?.paths || []))
       .catch(() => setError('Could not load paths. Please try again.'))
       .finally(() => setLoading(false));
@@ -289,7 +297,7 @@ export default function PathsPage() {
               </div>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {filtered.map((path, i) => (
-                  <PathCard key={path.id} path={path} index={i} />
+                  <PathCard key={path.id} path={path} index={i} userPathId={user?.pathId} />
                 ))}
               </div>
             </>

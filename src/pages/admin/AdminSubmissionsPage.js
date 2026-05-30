@@ -1,12 +1,30 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import { motion } from 'framer-motion';
-import { ExternalLink, CheckCircle, XCircle, Clock, AlertCircle, Search } from 'lucide-react';
+import { ExternalLink, CheckCircle, XCircle, Clock, AlertCircle, Search, Copy, Check } from 'lucide-react';
 import DashboardLayout from '../../layouts/DashboardLayout';
 import Card from '../../components/ui/Card';
 import Badge from '../../components/ui/Badge';
 import Button from '../../components/ui/Button';
 import { SkeletonCard } from '../../components/ui/Skeleton';
 import submissionService from '../../services/submissionService';
+import usePageTitle from '../../hooks/usePageTitle';
+import { useToast } from '../../components/ui/Toast';
+
+function CopyButton({ text }) {
+  const [copied, setCopied] = useState(false);
+  const handleCopy = () => {
+    navigator.clipboard.writeText(text).then(() => {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    });
+  };
+  return (
+    <button onClick={handleCopy} title={copied ? 'Copied!' : 'Copy URL'}
+      className="p-1 rounded text-outline dark:text-slate-500 hover:text-primary transition-colors flex-shrink-0">
+      {copied ? <Check size={13} className="text-tertiary" /> : <Copy size={13} />}
+    </button>
+  );
+}
 
 const STATUS = {
   approved: { icon: CheckCircle, color: 'green', label: 'Approved' },
@@ -21,6 +39,8 @@ function timeAgo(d) {
 }
 
 export default function AdminSubmissionsPage() {
+  usePageTitle('Submissions');
+  const { showToast } = useToast();
   const [submissions, setSubmissions] = useState([]);
   const [loading, setLoading]   = useState(true);
   const [error, setError]       = useState(null);
@@ -63,7 +83,7 @@ export default function AdminSubmissionsPage() {
         ? { ...s, status, feedback: feedbacks[id] || '', reviewedAt: new Date().toISOString() }
         : s));
     } catch (err) {
-      alert(err.response?.data?.message || 'Review failed.');
+      showToast(err.response?.data?.message || 'Review failed.', 'error');
     } finally {
       setReviewing(null);
     }
@@ -124,10 +144,14 @@ export default function AdminSubmissionsPage() {
                       </div>
 
                       {sub.githubUrl && (
-                        <a href={sub.githubUrl} target="_blank" rel="noopener noreferrer"
-                          className="flex items-center gap-1.5 text-xs text-primary hover:underline mb-3">
-                          <ExternalLink size={12} />{sub.githubUrl.replace('https://', '')}
-                        </a>
+                        <div className="flex items-center gap-1.5 mb-3">
+                          <a href={sub.githubUrl} target="_blank" rel="noopener noreferrer"
+                            className="flex items-center gap-1.5 text-xs text-primary hover:underline flex-1 min-w-0">
+                            <ExternalLink size={12} className="flex-shrink-0" />
+                            <span className="truncate">{sub.githubUrl.replace('https://', '')}</span>
+                          </a>
+                          <CopyButton text={sub.githubUrl} />
+                        </div>
                       )}
                       {sub.notes && (
                         <p className="text-xs text-on-surface-variant dark:text-slate-400 bg-surface-container dark:bg-white/5 rounded px-3 py-2 mb-3">{sub.notes}</p>

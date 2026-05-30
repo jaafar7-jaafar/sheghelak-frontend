@@ -7,6 +7,7 @@ import Badge from '../../components/ui/Badge';
 import { SkeletonCard } from '../../components/ui/Skeleton';
 import announcementService from '../../services/announcementService';
 import notificationService from '../../services/notificationService';
+import usePageTitle from '../../hooks/usePageTitle';
 
 function timeAgo(dateStr) {
   const diff = Date.now() - new Date(dateStr).getTime();
@@ -19,6 +20,8 @@ function timeAgo(dateStr) {
 }
 
 export default function AnnouncementsPage() {
+  usePageTitle('Announcements');
+
   const [announcements, setAnnouncements] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -36,6 +39,13 @@ export default function AnnouncementsPage() {
   }, []);
 
   useEffect(() => { load(); }, [load]);
+
+  // Auto mark all as read when page opens — update UI only on success
+  useEffect(() => {
+    notificationService.markAllRead()
+      .then(() => setAnnouncements(prev => prev.map(a => ({ ...a, isRead: true }))))
+      .catch(() => null);
+  }, []);
 
   const unread = announcements.filter(a => !a.isRead).length;
 

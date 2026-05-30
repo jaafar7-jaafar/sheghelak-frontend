@@ -4,6 +4,7 @@ import {
   Search, BookOpen, Trash2, X, Check,
   UserX, RefreshCw, AlertCircle, BookMarked
 } from 'lucide-react';
+import usePageTitle from '../../hooks/usePageTitle';
 import DashboardLayout from '../../layouts/DashboardLayout';
 import Card from '../../components/ui/Card';
 import Badge from '../../components/ui/Badge';
@@ -26,7 +27,7 @@ function ChangePathModal({ user, onClose, onSaved }) {
   useEffect(() => {
     pathService.listPaths({ limit: 50 })
       .then(res => setPaths(res.data?.paths || []))
-      .catch(() => {})
+      .catch(err => setError(err.response?.data?.message || 'Failed to load paths. Please close and try again.'))
       .finally(() => setLoading(false));
   }, []);
 
@@ -43,8 +44,10 @@ function ChangePathModal({ user, onClose, onSaved }) {
     }
   };
 
+  const [confirmRemove, setConfirmRemove] = useState(false);
+
   const handleRemove = async () => {
-    if (!window.confirm(`Remove ${user.name}'s current path and all progress?`)) return;
+    if (!confirmRemove) { setConfirmRemove(true); return; }
     setRemoving(true);
     try {
       await userService.removeUserPath(user.id);
@@ -53,6 +56,7 @@ function ChangePathModal({ user, onClose, onSaved }) {
     } catch (err) {
       setError(err.response?.data?.message || 'Failed to remove path.');
       setRemoving(false);
+      setConfirmRemove(false);
     }
   };
 
@@ -91,14 +95,24 @@ function ChangePathModal({ user, onClose, onSaved }) {
                   <span className="text-xs font-semibold text-primary">{user.pathProgress}%</span>
                 </div>
               </div>
-              <button
-                onClick={handleRemove}
-                disabled={removing}
-                className="flex items-center gap-1 text-xs text-error hover:bg-error/10 px-2 py-1 rounded border border-error/30 transition-colors disabled:opacity-50"
-              >
-                {removing ? <RefreshCw size={11} className="animate-spin" /> : <X size={11} />}
-                Remove
-              </button>
+              {confirmRemove ? (
+                <div className="flex items-center gap-1.5">
+                  <span className="text-xs text-error font-medium">Sure?</span>
+                  <button onClick={handleRemove} disabled={removing}
+                    className="flex items-center gap-1 text-xs text-white bg-error hover:bg-error/90 px-2 py-1 rounded transition-colors disabled:opacity-50">
+                    {removing ? <RefreshCw size={11} className="animate-spin" /> : <Check size={11} />} Yes
+                  </button>
+                  <button onClick={() => setConfirmRemove(false)}
+                    className="text-xs text-outline dark:text-slate-500 hover:text-on-surface px-2 py-1 rounded border border-outline-variant/30 dark:border-white/10 transition-colors">
+                    No
+                  </button>
+                </div>
+              ) : (
+                <button onClick={handleRemove} disabled={removing}
+                  className="flex items-center gap-1 text-xs text-error hover:bg-error/10 px-2 py-1 rounded border border-error/30 transition-colors disabled:opacity-50">
+                  <X size={11} /> Remove
+                </button>
+              )}
             </div>
           )}
 
@@ -227,7 +241,9 @@ function UserRow({ user, onStatusChange, onDelete, onPathChange, index }) {
     try {
       await userService.updateUserStatus(user.id, newStatus);
       onStatusChange(user.id, newStatus);
-    } catch { /* silent */ } finally { setToggling(false); }
+    } catch (err) {
+      alert(err.response?.data?.message || 'Failed to update user status.');
+    } finally { setToggling(false); }
   };
 
   return (
@@ -338,6 +354,7 @@ function UserRow({ user, onStatusChange, onDelete, onPathChange, index }) {
 
 // ─── Main Page ────────────────────────────────────────────────────────────────
 export default function AdminUsersPage() {
+  usePageTitle('Users');
   const [users, setUsers]     = useState([]);
   const [total, setTotal]     = useState(0);
   const [loading, setLoading] = useState(true);

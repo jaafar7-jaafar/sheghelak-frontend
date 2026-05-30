@@ -20,6 +20,7 @@ import {
   Search,
 } from "lucide-react";
 import DashboardLayout from "../../layouts/DashboardLayout";
+import usePageTitle from "../../hooks/usePageTitle";
 import Card from "../../components/ui/Card";
 import Badge from "../../components/ui/Badge";
 import Button from "../../components/ui/Button";
@@ -450,7 +451,7 @@ function AssignPathModal({ paths, onClose, onAssigned }) {
     userService
       .listUsers({ limit: 100, role: "user", status: "active" })
       .then((res) => setUsers(res.data?.users || []))
-      .catch(() => {})
+      .catch((err) => setError(err.response?.data?.message || "Failed to load users. Please close and try again."))
       .finally(() => setLoadingUsers(false));
   }, []);
 
@@ -965,6 +966,7 @@ function DeleteConfirm({ path, onClose, onDeleted }) {
 
 // ─── Main Page ────────────────────────────────────────────────────────────────
 export default function AdminPathsPage() {
+  usePageTitle('Paths');
   const [paths, setPaths] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);

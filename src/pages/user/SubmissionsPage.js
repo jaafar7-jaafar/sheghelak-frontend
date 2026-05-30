@@ -1,11 +1,31 @@
 import React, { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
-import { ExternalLink, Clock, CheckCircle, XCircle, AlertCircle } from 'lucide-react';
+import { ExternalLink, Clock, CheckCircle, XCircle, AlertCircle, Copy, Check } from 'lucide-react';
 import DashboardLayout from '../../layouts/DashboardLayout';
 import Card from '../../components/ui/Card';
 import Badge from '../../components/ui/Badge';
 import { SkeletonCard } from '../../components/ui/Skeleton';
 import submissionService from '../../services/submissionService';
+import usePageTitle from '../../hooks/usePageTitle';
+
+function CopyButton({ text }) {
+  const [copied, setCopied] = useState(false);
+  const handleCopy = () => {
+    navigator.clipboard.writeText(text).then(() => {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    });
+  };
+  return (
+    <button
+      onClick={handleCopy}
+      title={copied ? 'Copied!' : 'Copy URL'}
+      className="p-1 rounded text-outline dark:text-slate-500 hover:text-primary transition-colors flex-shrink-0"
+    >
+      {copied ? <Check size={13} className="text-tertiary" /> : <Copy size={13} />}
+    </button>
+  );
+}
 
 const STATUS = {
   approved: { icon: CheckCircle, color: 'green', label: 'Approved' },
@@ -22,6 +42,7 @@ function timeAgo(dateStr) {
 }
 
 export default function SubmissionsPage() {
+  usePageTitle('My Submissions');
   const [submissions, setSubmissions] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -64,9 +85,13 @@ export default function SubmissionsPage() {
                         <Badge color={s.color}><s.icon size={11} />{s.label}</Badge>
                       </div>
                       {sub.githubUrl && (
-                        <a href={sub.githubUrl} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1.5 text-xs text-primary hover:underline mb-3">
-                          <ExternalLink size={12} />{sub.githubUrl.replace('https://', '')}
-                        </a>
+                        <div className="flex items-center gap-1.5 mb-3">
+                          <a href={sub.githubUrl} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1.5 text-xs text-primary hover:underline flex-1 min-w-0">
+                            <ExternalLink size={12} className="flex-shrink-0" />
+                            <span className="truncate">{sub.githubUrl.replace('https://', '')}</span>
+                          </a>
+                          <CopyButton text={sub.githubUrl} />
+                        </div>
                       )}
                       {sub.notes && <p className="text-xs text-on-surface-variant dark:text-slate-400 bg-surface-container dark:bg-white/5 rounded px-3 py-2 mb-3">{sub.notes}</p>}
                       {sub.feedback && (

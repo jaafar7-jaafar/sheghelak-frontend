@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { User, Lock, Moon, Sun, Save } from 'lucide-react';
+import usePageTitle from '../../hooks/usePageTitle';
 import DashboardLayout from '../../layouts/DashboardLayout';
 import Card from '../../components/ui/Card';
 import Button from '../../components/ui/Button';
@@ -11,6 +12,7 @@ import { useTheme } from '../../theme/ThemeContext';
 import userService from '../../services/userService';
 
 export default function SettingsPage() {
+  usePageTitle('Settings');
   const { user, updateUser } = useAuth();
   const { isDark, toggle }   = useTheme();
 

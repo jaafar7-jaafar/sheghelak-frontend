@@ -36,7 +36,7 @@ function SidebarContent({ nav, onClose }) {
   useEffect(() => {
     telegramService.getSettings()
       .then(res => setTelegram(res.data || { isEnabled: false, communityUrl: '' }))
-      .catch(() => {});
+      .catch(() => setTelegram({ isEnabled: false, communityUrl: '' }));
   }, []);
 
   const handleLogout = () => {
@@ -49,9 +49,7 @@ function SidebarContent({ nav, onClose }) {
       {/* Logo */}
       <div className="flex items-center justify-between px-4 py-5 border-b border-outline-variant/30 dark:border-white/5">
         <div className="flex items-center gap-2">
-          <div className="w-7 h-7 rounded-lg bg-primary flex items-center justify-center flex-shrink-0">
-            <span className="text-white font-bold text-xs">S</span>
-          </div>
+          <img src="/logo.png" alt="Sheghelak" className="h-8 w-auto object-contain flex-shrink-0" />
           <span className="font-bold text-sm text-on-surface dark:text-white tracking-tight">Sheghelak</span>
         </div>
         {onClose && (
@@ -163,9 +161,7 @@ export default function DashboardLayout({ children, isAdmin = false }) {
             <Menu size={20} />
           </button>
           <div className="flex items-center gap-2">
-            <div className="w-6 h-6 rounded bg-primary flex items-center justify-center">
-              <span className="text-white font-bold text-xs">S</span>
-            </div>
+            <img src="/logo.png" alt="Sheghelak" className="h-7 w-auto object-contain" />
             <span className="font-bold text-sm text-on-surface dark:text-white">Sheghelak</span>
           </div>
         </div>
